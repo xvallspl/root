@@ -33,7 +33,7 @@ ALLLIBS     += $(TREELIB)
 ALLMAPS     += $(TREEMAP)
 
 # include all dependency files
-INCLUDEFILES += $(TREEDEP)
+INCLUDEFILES += $(TREEDEP) Thread
 
 ##### local rules #####
 .PHONY:         all-$(MODNAME) clean-$(MODNAME) distclean-$(MODNAME)

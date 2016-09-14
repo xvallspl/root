@@ -14,7 +14,7 @@ list(REMOVE_ITEM dictHeaders ${CMAKE_SOURCE_DIR}/tree/treeplayer/inc/TBranchProx
 ROOT_GENERATE_DICTIONARY(G__${libname} ${dictHeaders} MODULE ${libname} LINKDEF LinkDef.h OPTIONS "-writeEmptyRootPCM")
 
 
-ROOT_LINKER_LIBRARY(${libname} *.cxx G__${libname}.cxx DEPENDENCIES Tree Graf3d Graf Hist Gpad RIO MathCore)
+ROOT_LINKER_LIBRARY(${libname} *.cxx G__${libname}.cxx DEPENDENCIES ${TBB_LIBRARIES} Thread Tree Graf3d Graf Hist Gpad RIO MathCore)
 ROOT_INSTALL_HEADERS()
 
 
