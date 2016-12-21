@@ -618,6 +618,10 @@ T TF1::EvalPar(const T *x, const Double_t *params)
 
 template<class T>
 inline T TF1::EvalParVec(const T * data, const Double_t *params){
+    if(fType!=3){
+      //This should throw an error
+      return TF1::EvalPar((double *) data, params);
+    }
     return ((TF1FunctionPointerImpl<T> *)(fFunctp))->fimpl( data, params);
 }
 
