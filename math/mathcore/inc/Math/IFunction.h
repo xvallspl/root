@@ -65,6 +65,7 @@ namespace Math {
 
    public:
 
+      typedef T BackendType;
       typedef  IBaseFunctionMultiDimTempl<T> BaseFunc;
 
 

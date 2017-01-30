@@ -110,6 +110,7 @@ class IParametricFunctionMultiDimTempl: virtual public IBaseFunctionMultiDimTemp
          virtual public IBaseParam {
 public:
 
+  typedef T BackendType;
   typedef IBaseFunctionMultiDimTempl<T>  BaseFunc;
 
       /**
