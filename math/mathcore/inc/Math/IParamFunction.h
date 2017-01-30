@@ -105,12 +105,12 @@ public:
    @ingroup  ParamFunc
 */
 
-template<class BackendType>
-class IParametricFunctionMultiDimTempl: virtual public IBaseFunctionMultiDimTempl<BackendType>,
+template<class T>
+class IParametricFunctionMultiDimTempl: virtual public IBaseFunctionMultiDimTempl<T>,
          virtual public IBaseParam {
 public:
 
-  typedef IBaseFunctionMultiDimTempl<BackendType>  BaseFunc;
+  typedef IBaseFunctionMultiDimTempl<T>  BaseFunc;
 
       /**
       Evaluate function at a point x and for given parameters p.
@@ -120,7 +120,7 @@ public:
       Use the pure virtual function DoEvalPar to implement it
    */
 
-     BackendType operator() (const BackendType * x, const double *  p ) const {
+     T operator() (const T * x, const double *  p ) const {
       return DoEvalPar(x, p);
    }
 
@@ -131,12 +131,12 @@ private:
       Implementation of the evaluation function using the x values and the parameters.
       Must be implemented by derived classes
    */
-   virtual BackendType DoEvalPar(const BackendType * x, const double * p) const = 0;
+   virtual T DoEvalPar(const T * x, const double * p) const = 0;
 
    /**
       Implement the ROOT::Math::IBaseFunctionMultiDim interface DoEval(x) using the cached parameter values
    */
-   virtual BackendType DoEval(const BackendType *x) const {
+   virtual T DoEval(const T *x) const {
       return DoEvalPar( x, Parameters() );
    }
 };
@@ -381,9 +381,6 @@ private:
 
 
 };
-
-
-
 
    } // end namespace Math
 
