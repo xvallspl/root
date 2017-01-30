@@ -530,7 +530,7 @@ TF1::TF1(const char *name,Double_t (*fcn)(Double_t *, Double_t *), Double_t xmin
    fParent(0), fHistogram(0),
    fMethodCall(0),
    fNormalized(false), fNormIntegral(0),
-   fFunctor(ROOT::Math::ParamFunctor(fcn)),
+   fFunctor(new TF1FunctorPointerImpl<double>(ROOT::Math::ParamFunctor(fcn))),
    fFormula(0),
    fParams(new TF1Parameters(npar) )
 
@@ -564,7 +564,7 @@ TF1::TF1(const char *name,Double_t (*fcn)(const Double_t *, const Double_t *), D
    fParent(0), fHistogram(0),
    fMethodCall(0),
    fNormalized(false), fNormIntegral(0),
-   fFunctor(ROOT::Math::ParamFunctor(fcn)),
+   fFunctor(new TF1FunctorPointerImpl<double>(ROOT::Math::ParamFunctor(fcn))),
    fFormula(0),
    fParams(new TF1Parameters(npar) )
 {
@@ -596,7 +596,7 @@ TF1::TF1(const char *name, ROOT::Math::ParamFunctor f, Double_t xmin, Double_t x
    fParent(0), fHistogram(0),
    fMethodCall(0),
    fNormalized(false), fNormIntegral(0),
-   fFunctor(ROOT::Math::ParamFunctor(f)),
+   fFunctor(new TF1FunctorPointerImpl<double>(ROOT::Math::ParamFunctor(f))),
    fFormula(0),
    fParams(new TF1Parameters(npar) )
 
@@ -1232,10 +1232,10 @@ Double_t TF1::EvalPar(const Double_t *x, const Double_t *params)
    }
    Double_t result = 0;
    if (fType == 1)  {
-      if (!fFunctor.Empty()) {
+      if (fFunctor != nullptr) {
          assert(fParams);
-         if (params) result = fFunctor((Double_t*)x,(Double_t*)params);
-         else        result = fFunctor((Double_t*)x,(Double_t*)fParams->GetParameters());
+         if (params) result = ((TF1FunctorPointerImpl<Double_t> *)fFunctor)->fImpl((Double_t*)x,(Double_t*)params);
+         else        result = ((TF1FunctorPointerImpl<Double_t> *)fFunctor)->fImpl((Double_t*)x,(Double_t*)fParams->GetParameters());
 
       }else          result = GetSave(x);
 
@@ -2629,7 +2629,7 @@ Bool_t TF1::IsValid() const
    if (fMethodCall) return fMethodCall->IsValid();
    // function built on compiled functors are always valid by definition
    // (checked at compiled time)
-   if (fFunctor.Empty() && fSave.empty()) return kFALSE;
+   if (fFunctor!=nullptr && fSave.empty()) return kFALSE;
    return kTRUE;
 }
 
@@ -2648,7 +2648,7 @@ void TF1::Print(Option_t *option) const
       if (fType == 2)
          printf("Interpreted based function: %s(double *x, double *p).  Ndim = %d, Npar = %d  \n",GetName(), GetNpar(), GetNdim());
       else {
-         if (!fFunctor.Empty())
+         if (fFunctor!=nullptr)
             printf("Compiled based function: %s  based on a functor object.  Ndim = %d, Npar = %d\n",GetName(),GetNpar(), GetNdim());
          else {
             printf("Function based on a list of points from a compiled based function: %s.  Ndim = %d, Npar = %d, Npx = %d\n",GetName(),GetNpar(), GetNdim(),int(fSave.size()));
@@ -3394,7 +3394,7 @@ void TF1::Update()
       fNormIntegral = 0;
 
    // std::vector<double>x(fNdim);
-   // if ((fType == 1) && !fFunctor.Empty())  fFunctor(x.data(), (Double_t*)fParams);
+   // if ((fType == 1) && !fFunctor->Empty())  (*fFunctor)x.data(), (Double_t*)fParams);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
