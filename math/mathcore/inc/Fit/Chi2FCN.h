@@ -133,7 +133,7 @@ public:
 
 
    /// i-th chi-square residual
-   virtual double DataElement(const double *, unsigned int i, double *) const {
+   virtual double DataElement(const double * , unsigned int i, double *) const {
       if (i==0) this->UpdateNCalls();
       return 0.0;//FitUtil::EvaluateChi2Residual(BaseFCN::ModelFunction(), BaseFCN::Data(), x, i, g);
    }
@@ -186,6 +186,8 @@ private:
 };
 
       // define useful typedef's
+      template<class T>
+      using Chi2Function_v = Chi2FCN<ROOT::Math::IMultiGenFunction, ROOT::Math::IParametricFunctionMultiDimTempl<T>>;
       typedef Chi2FCN<ROOT::Math::IMultiGenFunction,ROOT::Math::IParamMultiFunction> Chi2Function;
       typedef Chi2FCN<ROOT::Math::IMultiGradFunction, ROOT::Math::IParamMultiFunction> Chi2GradFunction;
 

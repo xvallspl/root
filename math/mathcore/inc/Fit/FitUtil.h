@@ -27,11 +27,11 @@
 #include "Math/IntegratorMultiDim.h"
 
 #include "TError.h"
+#include "TSystem.h"
 
 namespace ROOT {
 
    namespace Fit {
-
 
 /**
    namespace defining utility free functions using in Fit for evaluating the various fit method
@@ -53,7 +53,7 @@ namespace FitUtil {
        evaluate the Chi2 given a model function and the data at the point x.
        return also nPoints as the effective number of used points in the Chi2 evaluation
    */
-   double EvaluateChi2(const IModelFunction & func, const BinData & data, const double * x, unsigned int & nPoints, const unsigned int &executionPolicy);
+   double EvaluateChi2(const IModelFunction & func, const BinData & data, const double * x, unsigned int & nPoints, const unsigned int &executionPolicy, unsigned nChunks=1 );
 
    /**
        evaluate the effective Chi2 given a model function and the data at the point x.
@@ -127,7 +127,7 @@ namespace FitUtil {
 
   template<class T>
   struct EvalChi2{
-    static double DoEval(const IModelFunctionTempl<T> & func, const BinData & data, const double * p, unsigned int & nPoints, const unsigned int &executionPolicy){
+    static double DoEval(const IModelFunctionTempl<T> & func, const BinData & data, const double * p, unsigned int & nPoints, const unsigned int &executionPolicy, unsigned nChunks = 0){
       // evaluate the chi2 given a  vectorized function reference  , the data and returns the value and also in nPoints
       // the actual number of used points
       // normal chi2 using only error on values (from fitting histogram)
@@ -152,8 +152,6 @@ namespace FitUtil {
       (const_cast<IModelFunctionTempl<T> &>(func)).SetParameters(p);
 
       double maxResValue = std::numeric_limits<double>::max() /n;
-      double wrefVolume = 1.0;
-      std::vector<double> xc;
       std::vector<double> ones{1,1,1,1};
       auto vecSize = vecCore::VectorSize<T>();
 
@@ -167,8 +165,6 @@ namespace FitUtil {
 
           T fval{};
           T chi2{};
-
-          double binVolume = 1.0;
 
     #ifdef USE_PARAMCACHE
           fval = func ( &x );
@@ -202,11 +198,17 @@ namespace FitUtil {
           res += mapFunction(i);
         }
       }else if(executionPolicy == 1) {
+        // SysInfo_t s;
+        // gSystem->GetSysInfo(&s);
+        // auto ncpu  = s.fCpus;
+        // std::cout<<ncpu <<std::endl;
+        // unsigned nChunks = (((data.Size()/vecSize)/ncpu + 1) % 1000) *4 ;
+        // std::cout<<nChunks<<std::endl;
         ROOT::TThreadExecutor pool;
-        res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
-      } else if(executionPolicy == 2){
-        ROOT::TProcessExecutor pool;
-        res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
+        res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction, nChunks);
+      // } else if(executionPolicy == 2){
+      //   ROOT::TProcessExecutor pool;
+      //   res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
       } else{
         Error("FitUtil::EvaluateChi2","Execution policy unknown. Avalaible choices:\n 0: Serial (default)\n 1: MultiThread\n 2: MultiProcess");
       }
@@ -224,12 +226,12 @@ namespace FitUtil {
 
   template<>
   struct EvalChi2<double>{
-    static double DoEval(const IModelFunction & func, const BinData & data, const double * p, unsigned int & nPoints, const unsigned int &executionPolicy) {
+    static double DoEval(const IModelFunction & func, const BinData & data, const double * p, unsigned int & nPoints, const unsigned int &executionPolicy,unsigned nChunks = 1) {
       // evaluate the chi2 given a  function reference  , the data and returns the value and also in nPoints
       // the actual number of used points
       // normal chi2 using only error on values (from fitting histogram)
       // optionally the integral of function in the bin is used
-      return FitUtil::EvaluateChi2(func, data, p, nPoints, executionPolicy);
+      return FitUtil::EvaluateChi2(func, data, p, nPoints, executionPolicy, nChunks);
     }
   };
 
