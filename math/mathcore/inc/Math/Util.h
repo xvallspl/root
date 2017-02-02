@@ -18,6 +18,7 @@
 
 #include <cmath>
 #include <limits>
+#include "Math_vectypes.hxx"
 
 
 // for defining unused variables in the interfaces
@@ -52,6 +53,12 @@ std::string ToString(const T& val)
 /// safe evaluation of log(x) with a protections against negative or zero argument to the log
 /// smooth linear extrapolation below function values smaller than  epsilon
 /// (better than a simple cut-off)
+
+template<class T>
+inline T EvalLog(T x) {
+   return std::log(x);
+}
+
 inline double EvalLog(double x) {
    // evaluate the log
 #ifdef __CINT__
@@ -64,6 +71,10 @@ inline double EvalLog(double x) {
    else
       return std::log(x);
 }
+
+// inline Double_v EvalLog(Double_v x) {
+//    return std::log(x);
+// }
 
 }  // end namespace Util
 

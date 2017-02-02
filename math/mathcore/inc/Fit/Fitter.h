@@ -170,9 +170,9 @@ public:
    /**
        fit an unbinned data set using loglikelihood method
    */
-   bool Fit(const UnBinData & data, bool extended = false) {
+   bool Fit(const UnBinData & data, bool extended = false, unsigned executionPolicy=0) {
       SetData(data);
-      return DoUnbinnedLikelihoodFit(extended);
+      return DoUnbinnedLikelihoodFit(extended, executionPolicy);
    }
 
    /**
@@ -189,13 +189,13 @@ public:
    /**
       Unbinned Likelihood fit. Default is not extended
     */
-   bool LikelihoodFit(const UnBinData & data, bool extended = false) {
+   bool LikelihoodFit(const UnBinData & data, bool extended = false, unsigned executionPolicy=0) {
       SetData(data);
-      return DoUnbinnedLikelihoodFit(extended);
+      return DoUnbinnedLikelihoodFit(extended, executionPolicy);
    }
-   bool LikelihoodFit(const std::shared_ptr<UnBinData> & data, bool extended = false) {
+   bool LikelihoodFit(const std::shared_ptr<UnBinData> & data, bool extended = false, unsigned executionPolicy=0) {
       SetData(data);
-      return DoUnbinnedLikelihoodFit(extended);
+      return DoUnbinnedLikelihoodFit(extended, executionPolicy);
    }
 
 
@@ -439,7 +439,7 @@ protected:
    /// binned likelihood fit
    bool DoBinnedLikelihoodFit( bool extended = true);
    /// un-binned likelihood fit
-   bool DoUnbinnedLikelihoodFit( bool extended = false);
+   bool DoUnbinnedLikelihoodFit( bool extended = false, unsigned executionPolicy=0);
    /// linear least square fit
    bool DoLinearFit();
 
