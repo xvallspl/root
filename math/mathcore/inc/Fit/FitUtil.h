@@ -50,9 +50,17 @@ namespace FitUtil {
          template<class T>
          class LikelihoodAux{
           public:
+           LikelihoodAux(){};
 
-          LikelihoodAux(T logv={}, T w={}, T w2={}): logvalue(logv), weight(w), weight2(w2){
-          }
+           #ifdef __CLING__
+           LikelihoodAux(double *, double *, double *){};
+           #else
+           LikelihoodAux(T logv, T w, T w2){
+             logvalue = logv;
+             weight = w;
+             weight2 = w2;
+           }
+           #endif
 
            LikelihoodAux operator +( const LikelihoodAux & l) const{
               return LikelihoodAux<T>(logvalue + l.logvalue, weight  + l.weight, weight2 + l.weight2);
@@ -65,10 +73,15 @@ namespace FitUtil {
               return *this;
            }
 
-            T logvalue;
-            T weight;
-            T weight2;
-
+#ifdef __CLING__
+            double logvalue[vecCore::VectorSize<T>()];
+            double weight[vecCore::VectorSize<T>()];
+            double weight2[vecCore::VectorSize<T>()];
+#else
+            T logvalue{};
+            T weight{};
+            T weight2{};
+#endif
          };
 
          template<>
@@ -381,9 +394,9 @@ namespace FitUtil {
         auto chunks = nChunks !=0? nChunks: setAutomaticChunking(data.Size()/vecSize);
         ROOT::TThreadExecutor pool;
         res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction, chunks);
-      // } else if(executionPolicy == 2){
-      //   ROOT::TProcessExecutor pool;
-      //   res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
+      } else if(executionPolicy == 2){
+        ROOT::TProcessExecutor pool;
+        res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
       } else{
         Error("FitUtil::EvaluateChi2","Execution policy unknown. Avalaible choices:\n 0: Serial (default)\n 1: MultiThread\n 2: MultiProcess");
       }
@@ -499,8 +512,11 @@ namespace FitUtil {
     sumW_v = resArray.weight;
     sumW2_v= resArray.weight2;
   } else if(executionPolicy == 2){
-    // ROOT::TProcessExecutor pool;
-    // res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction);
+    ROOT::TProcessExecutor pool;
+    auto resArray = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
+    logl_v = resArray.logvalue;
+    sumW_v = resArray.weight;
+    sumW2_v= resArray.weight2;
   } else{
     Error("FitUtil::EvaluateLogL","Execution policy unknown. Avalaible choices:\n 0: Serial (default)\n 1: MultiThread\n 2: MultiProcess");
   }
@@ -508,7 +524,7 @@ namespace FitUtil {
   //reduce vector type to double.
   double logl  = 0.;
   double sumW  = 0.;
-  double sumW2 =0;;
+  double sumW2 = 0.;
 
   for(unsigned vIt = 0; vIt<vecSize; vIt++){
     logl += logl_v[vIt];

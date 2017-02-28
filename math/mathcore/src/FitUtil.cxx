@@ -355,8 +355,8 @@ double FitUtil::EvaluateChi2(const IModelFunction & func, const BinData & data, 
     ROOT::TThreadExecutor pool;
     res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction, chunks);
   } else if(executionPolicy == 2){
-    // ROOT::TProcessExecutor pool;
-    // res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction);
+    ROOT::TProcessExecutor pool;
+    res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction);
   } else{
     Error("FitUtil::EvaluateChi2","Execution policy unknown. Avalaible choices:\n 0: Serial (default)\n 1: MultiThread\n 2: MultiProcess");
   }
@@ -897,8 +897,11 @@ double FitUtil::EvaluateLogL(const IModelFunctionTempl<double>  & func, const Un
     sumW=resArray.weight;
     sumW2=resArray.weight2;
   } else if(executionPolicy == 2){
-    // ROOT::TProcessExecutor pool;
-    // res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction);
+    ROOT::TProcessExecutor pool;
+    auto resArray = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction);
+    logl = resArray.logvalue;
+    sumW = resArray.weight;
+    sumW2= resArray.weight2;
   } else{
     Error("FitUtil::EvaluateLogL","Execution policy unknown. Avalaible choices:\n 0: Serial (default)\n 1: MultiThread\n 2: MultiProcess");
   }
