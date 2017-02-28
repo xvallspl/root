@@ -396,7 +396,10 @@ namespace FitUtil {
         res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction, chunks);
       } else if(executionPolicy == 2){
         ROOT::TProcessExecutor pool;
-        res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
+        SysInfo_t s;
+        gSystem->GetSysInfo(&s);
+        auto ncpu  = s.fCpus;
+        res = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction, ncpu);
       } else{
         Error("FitUtil::EvaluateChi2","Execution policy unknown. Avalaible choices:\n 0: Serial (default)\n 1: MultiThread\n 2: MultiProcess");
       }
@@ -513,7 +516,10 @@ namespace FitUtil {
     sumW2_v= resArray.weight2;
   } else if(executionPolicy == 2){
     ROOT::TProcessExecutor pool;
-    auto resArray = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction);
+    SysInfo_t s;
+    gSystem->GetSysInfo(&s);
+    auto ncpu  = s.fCpus;
+    auto resArray = pool.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, data.Size()/vecSize), redFunction, ncpu);
     logl_v = resArray.logvalue;
     sumW_v = resArray.weight;
     sumW2_v= resArray.weight2;
