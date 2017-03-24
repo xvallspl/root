@@ -242,22 +242,30 @@ Double_t TMath::ErfcInverse(Double_t x)
 }
 
 
-
-
 ////////////////////////////////////////////////////////////////////////////////
 /// Compute factorial(n).
+template<typename Double_v, typename Int_v>
 
-Double_t TMath::Factorial(Int_t n)
+Double_v TMath::Factorial(Int_v n)
 {
-   if (n <= 0) return 1.;
-   Double_t x = 1;
-   Int_t b = 0;
+   
+   Mask<Double_v> mask0 (n<=0);
+   if (MaskFull(mask0)) return Double_v(1.0);
+
+   Double_v x = 1.0;
+   Int_v b = 0;
+   
    do {
       b++;
       x *= b;
    } while (b != n);
+
+   x=Blend(x,mask0,Double_v(1.0));
+   //Setting n<=0 cases to 1
+
    return x;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Computation of the normal frequency function freq(x).
@@ -437,27 +445,51 @@ Double_t TMath::GamSer(Double_t a,Double_t x)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Calculate a Breit Wigner function with mean and gamma.
-
-Double_t TMath::BreitWigner(Double_t x, Double_t mean, Double_t gamma)
+template<typename Double_v>
+Double_v TMath::BreitWigner(Double_v x, Double_v mean, Double_v gamma)
 {
-   Double_t bw = gamma/((x-mean)*(x-mean) + gamma*gamma/4);
-   return bw/(2*Pi());
+   Double_v bw = gamma/((x-mean)*(x-mean) + gamma*gamma/4);
+      bw=bw/2*Pi();
+   return bw;
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Calculate a gaussian function with mean and sigma.
 /// If norm=kTRUE (default is kFALSE) the result is divided
 /// by sqrt(2*Pi)*sigma.
 
-Double_t TMath::Gaus(Double_t x, Double_t mean, Double_t sigma, Bool_t norm)
+template<typename Double_v>
+Double_v TMath::Gaus(Double_v x, Double_v mean, Double_v sigma, Bool_t norm)
 {
-   if (sigma == 0) return 1.e30;
-   Double_t arg = (x-mean)/sigma;
-   // for |arg| > 39  result is zero in double precision
-   if (arg < -39.0 || arg > 39.0) return 0.0;
-   Double_t res = TMath::Exp(-0.5*arg*arg);
-   if (!norm) return res;
-   return res/(2.50662827463100024*sigma); //sqrt(2*Pi)=2.50662827463100024
+   Double_v res, res2;
+
+   //Check if sigma==0. return Inf
+   Mask<Double_v> mask0(sigma==Double_v(0.0f));
+   MaskedAssign(res,mask0,Double_v(1.e30f));
+   
+   //Check if anymore cases left
+   if(MaskFull(mask0)) return res;
+
+   //if (arg < -39.0 || arg > 39.0) return 0.0;
+   Double_v arg = (x-mean)/sigma;
+   
+   Mask<Double_v> mask1( arg<Double_v(-39.0f) || arg>Double_v(39.0f) );
+   MaskedAssign(res,mask1,Double_v(0.0f));
+   
+   //Check if anymore cases left   
+   if(MaskFull(mask1)) return res;
+   
+   res = TMath::Exp(-0.5*arg*arg);
+   res2=res/(Double_v(2.50662827463100024)*sigma); 
+   //if (!norm) return res;
+   //sqrt(2*Pi)=2.50662827463100024
+   
+   Mask<Double_v> mask2 (norm==true);
+   res=Blend(mask2,res2,res);
+
+   return res;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
