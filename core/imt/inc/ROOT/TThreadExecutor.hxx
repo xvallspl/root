@@ -196,9 +196,9 @@ namespace ROOT {
       unsigned step = (nTimes + nChunks - 1) / nChunks;
       // Avoid empty chunks
       unsigned actualChunks = (nTimes + step - 1) / step;
-      if(actualChunks != nChunks){
-          Warning("ROOT::TThreadExecutor::Map", "The number of chunks has been reduced to %d to avoid empty chunks", actualChunks);
-      }
+    //   if(actualChunks != nChunks){
+    //       Warning("ROOT::TThreadExecutor::Map", "The number of chunks has been reduced to %d to avoid empty chunks", actualChunks);
+    //   }
       using retType = decltype(func());
       std::vector<retType> reslist(actualChunks);
       auto lambda = [&](unsigned int i)
@@ -256,9 +256,9 @@ namespace ROOT {
       unsigned step = (end - start + nChunks - 1) / nChunks; //ceiling the division
       // Avoid empty chunks
       unsigned actualChunks = (end - start + step - 1) / step;
-      if(actualChunks != nChunks){
-          Warning("ROOT::TThreadExecutor::Map", "The number of chunks has been reduced to %d to avoid empty chunks", actualChunks);
-      }
+    //   if(actualChunks != nChunks){
+    //       Warning("ROOT::TThreadExecutor::Map", "The number of chunks has been reduced to %d to avoid empty chunks", actualChunks);
+    //   }
 
       using retType = decltype(func(start));
       std::vector<retType> reslist(actualChunks);
@@ -292,9 +292,9 @@ namespace ROOT {
       unsigned step = (nToProcess + nChunks - 1) / nChunks; //ceiling the division
       // Avoid empty chunks
       unsigned actualChunks = (nToProcess + step - 1) / step;
-      if(actualChunks != nChunks){
-          Warning("ROOT::TThreadExecutor::Map", "The number of chunks has been reduced to %d to avoid empty chunks", actualChunks);
-      }
+    //   if(actualChunks != nChunks){
+    //       Warning("ROOT::TThreadExecutor::Map", "The number of chunks has been reduced to %d to avoid empty chunks", actualChunks);
+    //   }
       using retType = decltype(func(args.front()));
       std::vector<retType> reslist(actualChunks);
       auto lambda = [&](unsigned int i)
