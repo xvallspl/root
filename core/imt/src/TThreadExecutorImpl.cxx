@@ -1,17 +1,17 @@
-#include "ROOT/TThreadExecutor.hxx"
+#include "ROOT/TThreadExecutorImpl.hxx"
 #include "ROOT/RMakeUnique.hxx"
 #include "tbb/tbb.h"
 //#include "tbb/task_arena.h"
 
 //////////////////////////////////////////////////////////////////////////
 ///
-/// \class ROOT::TThreadExecutor
+/// \class ROOT::TThreadExecutorImpl
 /// \ingroup Parallelism
 /// \brief This class provides a simple interface to execute the same task
 /// multiple times in parallel, possibly with different arguments every
 /// time. This mimics the behaviour of python's pool.Map method.
 ///
-/// ###ROOT::TThreadExecutor::Map
+/// ###ROOT::TThreadExecutorImpl::Map
 /// This class inherits its interfaces from ROOT::TExecutor\n.
 /// The two possible usages of the Map method are:\n
 /// * Map(F func, unsigned nTimes): func is executed nTimes with no arguments
@@ -21,7 +21,7 @@
 /// nThreads threads; It defaults to the number of cores.\n
 /// A collection containing the result of each execution is returned.\n
 /// **Note:** the user is responsible for the deletion of any object that might
-/// be created upon execution of func, returned objects included: ROOT::TThreadExecutor never
+/// be created upon execution of func, returned objects included: ROOT::TThreadExecutorImpl never
 /// deletes what it returns, it simply forgets it.\n
 ///
 /// \param func
@@ -47,11 +47,11 @@
 /// #### Examples:
 ///
 /// ~~~{.cpp}
-/// root[] ROOT::TThreadExecutor pool; auto hists = pool.Map(CreateHisto, 10);
-/// root[] ROOT::TThreadExecutor pool(2); auto squares = pool.Map([](int a) { return a*a; }, {1,2,3});
+/// root[] ROOT::TThreadExecutorImpl pool; auto hists = pool.Map(CreateHisto, 10);
+/// root[] ROOT::TThreadExecutorImpl pool(2); auto squares = pool.Map([](int a) { return a*a; }, {1,2,3});
 /// ~~~
 ///
-/// ###ROOT::TThreadExecutor::MapReduce
+/// ###ROOT::TThreadExecutorImpl::MapReduce
 /// This set of methods behaves exactly like Map, but takes an additional
 /// function as a third argument. This function is applied to the set of
 /// objects returned by the corresponding Map execution to "squash" them
@@ -59,14 +59,14 @@
 /// the vector returned by Map due to optimization of the number of chunks.
 ///
 /// If this function is a binary operator, the "squashing" will be performed in parallel.
-/// This is exclusive to ROOT::TThreadExecutor and not any other ROOT::TExecutor-derived classes.\n
+/// This is exclusive to ROOT::TThreadExecutorImpl and not any other ROOT::TExecutor-derived classes.\n
 /// An integer can be passed as the fourth argument indicating the number of chunks we want to divide our work in.
 /// This may be useful to avoid the overhead introduced when running really short tasks.
 ///
 /// ####Examples:
 /// ~~~{.cpp}
-/// root[] ROOT::TThreadExecutor pool; auto ten = pool.MapReduce([]() { return 1; }, 10, [](std::vector<int> v) { return std::accumulate(v.begin(), v.end(), 0); })
-/// root[] ROOT::TThreadExecutor pool; auto hist = pool.MapReduce(CreateAndFillHists, 10, PoolUtils::ReduceObjects);
+/// root[] ROOT::TThreadExecutorImpl pool; auto ten = pool.MapReduce([]() { return 1; }, 10, [](std::vector<int> v) { return std::accumulate(v.begin(), v.end(), 0); })
+/// root[] ROOT::TThreadExecutorImpl pool; auto hist = pool.MapReduce(CreateAndFillHists, 10, PoolUtils::ReduceObjects);
 /// ~~~
 ///
 //////////////////////////////////////////////////////////////////////////
@@ -78,27 +78,27 @@ namespace ROOT {
    /// Class constructor.
    /// If the scheduler is active, gets a pointer to it.
    /// If not, initializes the pool of threads with the number of logical threads supported by the hardware.
-   TThreadExecutor::TThreadExecutor(): TThreadExecutor::TThreadExecutor(tbb::task_scheduler_init::default_num_threads()) {}
+   TThreadExecutorImpl::TThreadExecutorImpl(): TThreadExecutorImpl::TThreadExecutorImpl(tbb::task_scheduler_init::default_num_threads()) {}
    //////////////////////////////////////////////////////////////////////////
    /// Class constructor.
-   /// nThreads is the number of threads that will be spawned. If the scheduler is active (ImplicitMT enabled, another TThreadExecutor instance),
+   /// nThreads is the number of threads that will be spawned. If the scheduler is active (ImplicitMT enabled, another TThreadExecutorImpl instance),
    /// it won't change the number of threads.
-   TThreadExecutor::TThreadExecutor(UInt_t nThreads)
+   TThreadExecutorImpl::TThreadExecutorImpl(UInt_t nThreads)
    {
       fSched = ROOT::Internal::GetPoolManager(nThreads);
       fArena = std::make_unique<tbb::task_arena>(ROOT::Internal::TPoolManager::GetPoolSize());
    }
 
-   TThreadExecutor::~TThreadExecutor()=default;
+   TThreadExecutorImpl::~TThreadExecutorImpl()=default;
 
-   void TThreadExecutor::ParallelFor(unsigned int start, unsigned int end, unsigned step, const std::function<void(unsigned int i)> &f)
+   void TThreadExecutorImpl::ParallelFor(unsigned int start, unsigned int end, unsigned step, const std::function<void(unsigned int i)> &f)
    {
       fArena->execute( [&](){
          tbb::parallel_for(start, end, step, f);
       });
    }
 
-   double TThreadExecutor::ParallelReduce(const std::vector<double> &objs, const std::function<double(double a, double b)> &redfunc)
+   double TThreadExecutorImpl::ParallelReduce(const std::vector<double> &objs, const std::function<double(double a, double b)> &redfunc)
    {
       double res{};
       fArena->execute( [&](){
@@ -109,7 +109,7 @@ namespace ROOT {
       return res;
    }
 
-   float TThreadExecutor::ParallelReduce(const std::vector<float> &objs, const std::function<float(float a, float b)> &redfunc)
+   float TThreadExecutorImpl::ParallelReduce(const std::vector<float> &objs, const std::function<float(float a, float b)> &redfunc)
    {
       float res{};
       fArena->execute( [&](){
