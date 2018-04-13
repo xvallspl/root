@@ -86,7 +86,7 @@ namespace ROOT {
    TThreadExecutorImpl::TThreadExecutorImpl(UInt_t nThreads)
    {
       fSched = ROOT::Internal::GetPoolManager(nThreads);
-      fArena = std::make_unique<tbb::task_arena>(ROOT::Internal::TPoolManager::GetPoolSize());
+      fArena = std::make_unique<tbb::task_arena>(nThreads);
    }
 
    TThreadExecutorImpl::~TThreadExecutorImpl()=default;

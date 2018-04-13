@@ -7,7 +7,7 @@
 
 #include <numa.h>
 #include <algorithm> // std::min, std::max
-
+#include <thread> //std::ma
 namespace ROOT {
 namespace Experimental {
 
@@ -17,7 +17,11 @@ public:
    template< class F, class... T>
    using noReferenceCond = typename std::enable_if<"Function can't return a reference" && !(std::is_reference<typename std::result_of<F(T...)>::type>::value)>::type;
 
-   explicit TNUMAExecutor():fNDomains(numa_max_node()+1){}
+   explicit TNUMAExecutor():TNUMAExecutor(ROOT::Internal::TPoolManager::GetPoolSize()==0? std::thread::hardware_concurrency() : ROOT::Internal::TPoolManager::GetPoolSize()){}
+   explicit TNUMAExecutor(unsigned nThreads):fNDomains(numa_max_node()+1)
+   {
+      fDomainNThreads = nThreads/fNDomains;
+   }
 
    unsigned GetNUMADomains(){
       return fNDomains;
@@ -53,6 +57,7 @@ private:
    std::vector<std::array_view<T>> splitData(std::vector<T> &vec);
 
    unsigned fNDomains{};
+   unsigned fDomainNThreads{};
 };
 
 
@@ -75,7 +80,7 @@ std::vector<std::array_view<T>> TNUMAExecutor::splitData(std::vector<T> &vec)
 
 template<class F>
 void TNUMAExecutor::Foreach(F func, unsigned nTimes) {
-      TThreadExecutorImpl pool;
+      TThreadExecutorImpl pool(fDomainNThreads);
       pool.Foreach(func, nTimes);
 }
 
@@ -84,7 +89,7 @@ void TNUMAExecutor::Foreach(F func, unsigned nTimes) {
 /// sequence as argument.
 template<class F, class INTEGER>
 void TNUMAExecutor::Foreach(F func, ROOT::TSeq<INTEGER> args) {
-      TThreadExecutorImpl pool;
+      TThreadExecutorImpl pool{fDomainNThreads};
       pool.Foreach(func, args);
 }
 
@@ -94,7 +99,7 @@ void TNUMAExecutor::Foreach(F func, ROOT::TSeq<INTEGER> args) {
 /// initializer_list as argument.
 template<class F, class T>
 void TNUMAExecutor::Foreach(F func, std::initializer_list<T> args) {
-    TThreadExecutorImpl pool;
+    TThreadExecutorImpl pool{fDomainNThreads};
     std::vector<T> vargs(std::move(args));
     pool.Foreach(func, vargs);
 }
@@ -105,7 +110,7 @@ void TNUMAExecutor::Foreach(F func, std::initializer_list<T> args) {
 /// std::vector as argument.
 template<class F, class T>
 void TNUMAExecutor::Foreach(F func, std::vector<T> &args) {
-      TThreadExecutorImpl pool;
+      TThreadExecutorImpl pool{fDomainNThreads};
       pool.Foreach(func, args);
 }
 
@@ -114,7 +119,7 @@ auto TNUMAExecutor::MapReduce(F func, unsigned nTimes, R redfunc, unsigned nChun
 {
    auto runOnNode = [&](unsigned int i) {
       numa_run_on_node(i);
-      ROOT::TThreadExecutorImpl pool;
+      ROOT::TThreadExecutorImpl pool{fDomainNThreads};
       auto res = nChunks? pool.MapReduce(func, nTimes, redfunc, nChunks/fNDomains) : pool.MapReduce(func, nTimes, redfunc); 
       numa_run_on_node_mask(numa_all_nodes_ptr);
       return res;
@@ -130,7 +135,7 @@ auto TNUMAExecutor::MapReduce(F func, std::vector<T> &args, R redfunc, unsigned 
    auto dataRanges = splitData(args);
    auto runOnNode = [&](unsigned int i) {
       numa_run_on_node(i);
-      ROOT::TThreadExecutorImpl pool;
+      ROOT::TThreadExecutorImpl pool{fDomainNThreads};
       auto res = nChunks? pool.MapReduce(func, dataRanges[i], redfunc, nChunks/fNDomains) : pool.MapReduce(func, dataRanges[i], redfunc); 
       numa_run_on_node_mask(numa_all_nodes_ptr);
       return res;
@@ -148,7 +153,7 @@ auto TNUMAExecutor::MapReduce(F func, ROOT::TSeq<INTEGER> args, R redfunc, unsig
    unsigned stride = (*args.end() - *args.begin() + fNDomains - 1) / fNDomains; //ceiling the division
    auto runOnNode = [&](unsigned int i) {
       numa_run_on_node(i);
-      ROOT::TThreadExecutorImpl pool;
+      ROOT::TThreadExecutorImpl pool{fDomainNThreads};
       ROOT::TSeq<unsigned> sequence(std::max(*args.begin(), i*stride), std::min((i+1)*stride, *args.end()));
       auto res =  pool.MapReduce(func, sequence, redfunc, nChunks/fNDomains);
       numa_run_on_node_mask(numa_all_nodes_ptr);
