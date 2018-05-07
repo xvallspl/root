@@ -31,7 +31,7 @@
 #include <numeric>
 #include "ROOT/RArrayView.hxx" // for IsContainer
 
-namespace tbb{namespace interface7{class task_arena;}}
+namespace tbb{ namespace interface7{class task_arena;}}
 
 namespace ROOT {
 
@@ -294,7 +294,7 @@ namespace ROOT {
          for (unsigned j = 0; j < step && (i + j) < end; j+=seqStep) {
             partialResults[j] = func(i + j);
          }
-         reslist[i / step] = redfunc(partialResults);
+         reslist[(i-start)/step] = redfunc(partialResults);
       };
       ParallelFor(start, end, step, lambda);
 
@@ -327,7 +327,7 @@ namespace ROOT {
          for (unsigned j = 0; j < step && (i + j) < nToProcess; j++) {
             partialResults[j] = func(args[i + j]);
          }
-         reslist[i / step] = redfunc(partialResults);
+         reslist[i/step] = redfunc(partialResults);
       };
 
       ParallelFor(0U, nToProcess, step, lambda);
@@ -354,7 +354,7 @@ namespace ROOT {
          for (unsigned j = 0; j < step && (i + j) < nToProcess; j++) {
             partialResults[j] = func(args[i + j]);
          }
-         reslist[i / step] = redfunc(partialResults);
+         reslist[i/step] = redfunc(partialResults);
       };
 
       ParallelFor(0U, nToProcess, step, lambda);
