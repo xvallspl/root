@@ -160,7 +160,7 @@ auto TNUMAExecutor::MapReduce(F func, ROOT::TSeq<INTEGER> args, R redfunc, unsig
       return res;
    };
 
-   ROOT::TProcessExecutor proc(fNDomains);
+   ROOT::TThreadExecutorImpl proc(fNDomains);
    return proc.MapReduce(runOnNode, ROOT::TSeq<unsigned>(fNDomains), redfunc);
 }
 
