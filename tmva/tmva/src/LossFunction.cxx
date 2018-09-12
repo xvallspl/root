@@ -83,7 +83,7 @@ void TMVA::HuberLossFunction::Init(std::vector<LossFunctionEventInfo>& evs){
 
 // Multithreaded version of HuberLossFunction::CalculateSumOfWeights
 #ifdef R__USE_IMT
-Double_t TMVA::HuberLossFunction::CalculateSumOfWeights(std::vector<LossFunctionEventInfo>& evs){
+Double_t TMVA::HuberLossFunction::CalculateSumOfWeights(const std::vector<LossFunctionEventInfo>& evs){
    
    // need a lambda function to pass to TThreadExecutor::MapReduce
    auto mapFunc= [&evs](UInt_t i){return evs[i].weight;};
