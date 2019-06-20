@@ -143,6 +143,11 @@ public:
 
    double Integral(const double *x1, const double *x2)
    {
+      if (fIg1Dim == nullptr && fIgNDim == nullptr) {
+         Error("ROOT::Fit::FitUtil::IntegralEvaluator",
+               "Neither the 1Dim or the NDim integrators have been initialized.\n");
+      }
+
       // return unormalized integral
       return (fIg1Dim) ? fIg1Dim->Integral(*x1, *x2) : fIgNDim->Integral(x1, x2);
    }
