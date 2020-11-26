@@ -25,6 +25,7 @@
 #include "ROOT/TExecutorCRTP.hxx"
 #include "ROOT/TSeq.hxx"
 #include "RTaskArena.hxx"
+#include "ROOT/RSpan.hxx"
 #include "TError.h"
 
 #include <functional> //std::function
@@ -58,10 +59,14 @@ namespace ROOT {
       void Foreach(F func, std::vector<T> &args, unsigned nChunks = 0);
       template<class F, class T>
       void Foreach(F func, const std::vector<T> &args, unsigned nChunks = 0);
+      template<class F, class T, class Cond = noReferenceCond<F, T>>
+      void Foreach(F func, std::span<T> &args);
 
       // Map
       //
       using TExecutorCRTP<TThreadExecutor>::Map;
+      template<class F, class T, class Cond = noReferenceCond<F, T>>
+      auto Map(F func, std::span<T> &args) -> std::vector<typename std::result_of<F(T)>::type>;
 
       // MapReduce
       //
@@ -88,6 +93,10 @@ namespace ROOT {
       auto MapReduce(F func, std::vector<T> &args, R redfunc, unsigned nChunks) -> typename std::result_of<F(T)>::type;
       template<class F, class T, class R, class Cond = noReferenceCond<F, T>>
       auto MapReduce(F func, const std::vector<T> &args, R redfunc, unsigned nChunks) -> typename std::result_of<F(T)>::type;
+      template<class F, class T, class R, class Cond = noReferenceCond<F, T>>
+      auto MapReduce(F func, std::span<T> &args, R redfunc) -> typename std::result_of<F(T)>::type;
+      template<class F, class T, class R, class Cond = noReferenceCond<F, T>>
+      auto MapReduce(F func, std::span<T> &args, R redfunc, unsigned nChunks) -> typename std::result_of<F(T)>::type;
 
       using TExecutorCRTP<TThreadExecutor>::Reduce;
       template<class T, class R> auto Reduce(const std::vector<T> &objs, R redfunc) -> decltype(redfunc(objs));
@@ -119,6 +128,8 @@ namespace ROOT {
       auto Map(F func, std::vector<T> &args, R redfunc, unsigned nChunks) -> std::vector<typename std::result_of<F(T)>::type>;
       template<class F, class T, class R, class Cond = noReferenceCond<F, T>>
       auto Map(F func, const std::vector<T> &args, R redfunc, unsigned nChunks) -> std::vector<typename std::result_of<F(T)>::type>;
+      template<class F, class T, class R, class Cond = noReferenceCond<F, T>>
+      auto Map(F func, std::span<T> &args, R redfunc, unsigned nChunks) -> std::vector<typename std::result_of<F(T)>::type>;
 
       // Functions that interface with the parallel library used as a backend
       void   ParallelFor(unsigned start, unsigned end, unsigned step, const std::function<void(unsigned int i)> &f);
@@ -358,6 +369,24 @@ namespace ROOT {
       return reslist;
    }
 
+   template<class F, class T, class Cond>
+   auto TThreadExecutor::Map(F func, std::span<T> &args) -> std::vector<typename std::result_of<F(T)>::type> {
+      // //check whether func is callable
+      using retType = decltype(func(args.front()));
+
+      unsigned int nToProcess = args.size();
+      std::vector<retType> reslist(nToProcess);
+
+      auto lambda = [&](const unsigned int i)
+      {
+         reslist[i] = func(args[i]);
+      };
+
+      ParallelFor(0U, nToProcess, 1, lambda);
+
+      return reslist;
+   }
+
    //////////////////////////////////////////////////////////////////////////
    /// \brief Execute a function in parallel over the elements of a sequence, dividing the execution in nChunks and
    /// providing a result per chunk.
@@ -470,6 +499,32 @@ namespace ROOT {
       return reslist;
    }
 
+   template<class F, class T, class R, class Cond>
+   auto TThreadExecutor::Map(F func, std::span<T> &args, R redfunc, unsigned nChunks) -> std::vector<typename std::result_of<F(T)>::type> {
+      if (nChunks == 0)
+      {
+         return Map(func, args);
+      }
+
+      unsigned int nToProcess = args.size();
+      unsigned step = (nToProcess + nChunks - 1) / nChunks;
+      unsigned actualChunks = (nToProcess + step - 1) / step;
+
+      using retType = decltype(func(args.front()));
+      std::vector<retType> reslist(actualChunks);
+      auto lambda = [&](unsigned int i)
+      {
+         std::vector<T> partialResults(step);
+         for (unsigned j = 0; j < step && (i + j) < nToProcess; j++) {
+            partialResults[j] = func(args[i + j]);
+         }
+         reslist[i / step] = redfunc(partialResults);
+      };
+
+      ParallelFor(0U, nToProcess, step, lambda);
+
+      return reslist;
+   }
    //////////////////////////////////////////////////////////////////////////
    /// \brief Execute a function `nTimes` in parallel (Map) and accumulate the results into a single value (Reduce).
    /// \copydetails  ROOT::Internal::TExecutor::MapReduce(F func,unsigned nTimes,R redfunc)
@@ -541,6 +596,16 @@ namespace ROOT {
    /// \copydetails ROOT::Internal::TExecutor::MapReduce(F func,const std::vector<T> &args,R redfunc,unsigned nChunks)
    template<class F, class T, class R, class Cond>
    auto TThreadExecutor::MapReduce(F func, const std::vector<T> &args, R redfunc, unsigned nChunks) -> typename std::result_of<F(T)>::type {
+      return Reduce(Map(func, args, redfunc, nChunks), redfunc);
+   }
+
+   template<class F, class T, class R, class Cond>
+   auto TThreadExecutor::MapReduce(F func, std::span<T> &args, R redfunc) -> typename std::result_of<F(T)>::type {
+      return Reduce(Map(func, args), redfunc);
+   }
+
+   template<class F, class T, class R, class Cond>
+   auto TThreadExecutor::MapReduce(F func, std::span<T> &args, R redfunc, unsigned nChunks) -> typename std::result_of<F(T)>::type {
       return Reduce(Map(func, args, redfunc, nChunks), redfunc);
    }
 
