@@ -471,14 +471,6 @@ namespace ROOT {
    }
 
    //////////////////////////////////////////////////////////////////////////
-   /// \brief Execute a function `nTimes` in parallel (Map) and accumulate the results into a single value (Reduce).
-   /// \copydetails  ROOT::Internal::TExecutor::MapReduce(F func,unsigned nTimes,R redfunc)
-   template<class F, class R, class Cond>
-   auto TThreadExecutor::MapReduce(F func, unsigned nTimes, R redfunc) -> typename std::result_of<F()>::type {
-      return Reduce(Map(func, nTimes), redfunc);
-   }
-
-   //////////////////////////////////////////////////////////////////////////
    /// \brief Execute a function in parallel over the elements of a vector (Map) and accumulate the results into a single value (Reduce).
    /// Benefits from partial reduction into `nChunks` intermediate results.
    ///
@@ -506,22 +498,6 @@ namespace ROOT {
    template<class F, class T, class R, class Cond>
    auto TThreadExecutor::MapReduce(F func, std::initializer_list<T> args, R redfunc, unsigned nChunks) -> typename std::result_of<F(T)>::type {
       return Reduce(Map(func, args, redfunc, nChunks), redfunc);
-   }
-
-   //////////////////////////////////////////////////////////////////////////
-   /// \brief Execute a function over the elements of a vector in parallel (Map) and accumulate the results into a single value (Reduce).
-   /// \copydetails  ROOT::Internal::TExecutor::MapReduce(F func,std::vector<T> &args,R redfunc)
-   template<class F, class T, class R, class Cond>
-   auto TThreadExecutor::MapReduce(F func, std::vector<T> &args, R redfunc) -> typename std::result_of<F(T)>::type {
-      return Reduce(Map(func, args), redfunc);
-   }
-
-   //////////////////////////////////////////////////////////////////////////
-   /// \brief Execute a function over the elements of an immutable vector in parallel (Map) and accumulate the results into a single value (Reduce).
-   /// \copydetails  ROOT::Internal::TExecutor::MapReduce(F func,const std::vector<T> &args,R redfunc)
-   template<class F, class T, class R, class Cond>
-   auto TThreadExecutor::MapReduce(F func, const std::vector<T> &args, R redfunc) -> typename std::result_of<F(T)>::type {
-      return Reduce(Map(func, args), redfunc);
    }
 
    //////////////////////////////////////////////////////////////////////////
