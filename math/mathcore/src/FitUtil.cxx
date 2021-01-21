@@ -383,7 +383,7 @@ namespace ROOT {
    double res{};
    if (executionPolicy == ROOT::EExecutionPolicy::kSequential ||
          executionPolicy == ROOT::EExecutionPolicy::kMultiThread) {
-      ROOT::TThreadExecutor executor;
+      ROOT::Internal::TExecutor executor(executionPolicy);
       auto chunks = nChunks != 0 ? nChunks : setAutomaticChunking(data.Size());
       res = executor.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction, chunks);
    } else {
@@ -782,7 +782,7 @@ void FitUtil::EvaluateChi2Gradient(const IModelFunction &f, const BinData &data,
 
    if (executionPolicy == ROOT::EExecutionPolicy::kSequential ||
        executionPolicy == ROOT::EExecutionPolicy::kMultiThread) {
-      ROOT::TThreadExecutor executor;
+      ROOT::Internal::TExecutor executor(executionPolicy);
       auto chunks = nChunks != 0 ? nChunks : setAutomaticChunking(initialNPoints);
       g = executor.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, initialNPoints), redFunction, chunks);
    } else {
@@ -987,7 +987,7 @@ double FitUtil::EvaluateLogL(const IModelFunctionTempl<double> &func, const UnBi
    double sumW2{};
    if (executionPolicy == ROOT::EExecutionPolicy::kSequential ||
        executionPolicy == ROOT::EExecutionPolicy::kMultiThread) {
-      ROOT::TThreadExecutor executor;
+      ROOT::Internal::TExecutor executor(executionPolicy);
       auto chunks = nChunks != 0 ? nChunks : setAutomaticChunking(data.Size());
       auto resArray = executor.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction, chunks);
       logl = resArray.logvalue;
@@ -1145,7 +1145,7 @@ void FitUtil::EvaluateLogLGradient(const IModelFunction &f, const UnBinData &dat
 
    if (executionPolicy == ROOT::EExecutionPolicy::kSequential ||
        executionPolicy == ROOT::EExecutionPolicy::kMultiThread) {
-      ROOT::TThreadExecutor executor;
+      ROOT::Internal::TExecutor executor(executionPolicy);
       auto chunks = nChunks != 0 ? nChunks : setAutomaticChunking(initialNPoints);
       g = executor.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, initialNPoints), redFunction, chunks);
    } else {
@@ -1456,7 +1456,7 @@ double FitUtil::EvaluatePoissonLogL(const IModelFunction &func, const BinData &d
    double res{};
    if (executionPolicy == ROOT::EExecutionPolicy::kSequential ||
        executionPolicy == ROOT::EExecutionPolicy::kMultiThread) {
-      ROOT::TThreadExecutor executor;
+      ROOT::Internal::TExecutor executor(executionPolicy);
       auto chunks = nChunks != 0 ? nChunks : setAutomaticChunking(data.Size());
       res = executor.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, n), redFunction, chunks);
    } else {
@@ -1615,7 +1615,7 @@ void FitUtil::EvaluatePoissonLogLGradient(const IModelFunction &f, const BinData
 
    if (executionPolicy == ROOT::EExecutionPolicy::kSequential ||
        executionPolicy == ROOT::EExecutionPolicy::kMultiThread) {
-      ROOT::TThreadExecutor executor;
+      ROOT::Internal::TExecutor executor(executionPolicy);
       auto chunks = nChunks != 0 ? nChunks : setAutomaticChunking(initialNPoints);
       g = executor.MapReduce(mapFunction, ROOT::TSeq<unsigned>(0, initialNPoints), redFunction, chunks);
    } else {
